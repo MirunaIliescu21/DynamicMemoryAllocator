@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <struct.h>
 
 #define DIE(assertion, call_description)				\
 	do {								\
@@ -14,5 +15,6 @@
 	} while (0)
 
 int main(void)  {
-    
+	
 }
+
