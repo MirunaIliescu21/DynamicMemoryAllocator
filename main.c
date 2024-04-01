@@ -12,3 +12,7 @@
 			exit(errno);				        \
 		}							\
 	} while (0)
+
+int main(void)  {
+    
+}
