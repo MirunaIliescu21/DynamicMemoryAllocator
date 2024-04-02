@@ -3,13 +3,14 @@
 #include <string.h>
 #include <errno.h>
 #include "struct.h"
+#include "function.h"
 
 /* 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 */
 #define DEBUG 1 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
 
 
 int main() {
-    sfl_t sfl;
+    sfl_t *sfl = NULL;
     char input[MAX_INPUT_LENGTH];
 
     while (fgets(input, sizeof(input), stdin) != NULL) {
@@ -24,7 +25,7 @@ int main() {
 				printf("Parametri INIT_HEAP: start_address=%p, num_lists=%ld, bytes_per_list=%ld, reconstitution_type=%d\n", 
                     start_address, num_lists, bytes_per_list, reconstitution_type);
 			#endif
-            initialize_heap(&sfl, start_address, num_lists, bytes_per_list, reconstitution_type);
+            sfl = init_heap(start_address, num_lists, bytes_per_list, reconstitution_type);
 
         } else if (strcmp(command, "MALLOC") == 0) {
             size_t num_bytes = atoi(strtok(NULL, " \n"));
@@ -56,7 +57,7 @@ int main() {
 	            printf("Parametri WRITE: address=%p, data=\"%s\",  num_bytes=%ld\n", address, data, num_bytes);
 			#endif
             write_memory(address, data, num_bytes);
-			
+
         } else if (strcmp(command, "DUMP_MEMORY") == 0) {
             dump_memory(&sfl);
         } else if (strcmp(command, "DESTROY_HEAP") == 0) {

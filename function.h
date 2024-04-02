@@ -6,7 +6,8 @@
 
 
 /* Headerele functiilor */
-void initialize_heap(sfl_t *sfl, void* start_address, size_t num_lists, size_t bytes_per_list, int reconstitution_type);
+dllist_t *dll_create(size_t data_size);
+sfl_t *init_heap(void *start_address, size_t num_lists, size_t bytes_per_list, int reconstitution_type);
 void malloc_memory(sfl_t *sfl, size_t num_bytes);
 void free_memory(sfl_t *sfl, void* address);
 void read_memory(void* address, size_t num_bytes);

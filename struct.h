@@ -1,29 +1,40 @@
 #ifndef __STRUCT_H__
 #define __STRUCT_H__
 
-
+// Strctura de nod
 typedef struct block_t {
 	void *address; /* Adresa de inceput a blocului */
 	size_t size; /* Dimensiunea unui bloc */
-	struct Block *next, *prev;
+	
+	struct block_t *next, *prev;
+	void *data; /* Pentru datele de orice tip */
 
-} block_t;
+} dll_block_t;
 
+// Structura de lista
 typedef struct {
-	block_t *head;
+	dll_block_t *head;
 	size_t count; /* Numarul de blocuri dintr-o lista */
+	size_t data_size; /* Dimensiunea datelor stocate */
+} dllist_t;
 
-	size_t data_size;
-} list_t;
-
+// Structura vectorului de liste
 typedef struct {
-	list_t *lists;
+	dllist_t **lists; /* Vector de liste dublu inlantuite*/
 	size_t num_lists;
 	size_t bytes_per_list;
 	int reconstitution_type;
+	size_t total_memory;
+    size_t total_allocated_memory;
+    size_t total_free_memory;
+    size_t num_free_blocks;
+    size_t num_allocated_blocks;
+    size_t num_malloc_calls;
+    size_t num_fragmentations;
+    size_t num_free_calls;
 } sfl_t;
 
-#define MAX_INPUT_LENGTH 100
+#define MAX_INPUT_LENGTH 600
 
 /* Macro pentru gestiunea erorilor */
 #define DIE(assertion, call_description)				\
