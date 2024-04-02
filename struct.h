@@ -7,7 +7,7 @@ typedef struct block_t {
 	size_t size; /* Dimensiunea unui bloc */
 	
 	struct block_t *next, *prev;
-	void *data; /* Pentru datele de orice tip */
+	void *info; /* Pentru datele de orice tip */
 
 } dll_block_t;
 
