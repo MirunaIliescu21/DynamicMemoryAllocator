@@ -5,8 +5,6 @@
 #include "function.h"
 #include "struct.h"
 
-
-
 #define DEBUG 0 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
 
 /* Implementarea functiilor */
@@ -46,7 +44,7 @@ void dll_add_nth_node(dllist_t* list, size_t n)
     }
 
     new_node = malloc(sizeof(*new_node));
-    new_node->info = malloc(list->data_size);
+    new_node->info = NULL;
 
     new_node->next = curr;
     if (prev == NULL) {
@@ -87,16 +85,15 @@ void print_list_addresses(dllist_t *list)
     }
 
     dll_block_t *current_block = list->head;
-    
+
     if (DEBUG)
         printf("Adresele blocurilor din lista sunt:\n");
     
-    while (current_block != NULL) {
-        if (DEBUG) 
-            printf("%p ", current_block->address);
-               printf("%p ", current_block->address);
+    for (size_t i = 0; i < list->count; i++) {
+        printf("%p ", current_block->address);
         current_block = current_block->next;
     }
+
     printf("\n");
 }
 
@@ -142,9 +139,10 @@ init_heap(void *start_address, size_t num_lists, size_t bytes_per_list, int type
                
                 for (size_t j = 0; j < num_nodes; j++) {
                     dll_add_nth_node(sfl->lists[i], j);
-                        dll_block_t *node = dll_get_nth_node(sfl->lists[i], j);
+                    dll_block_t *node = dll_get_nth_node(sfl->lists[i], j);
                     if (node != NULL) {
                         node->address = start_address + (j * data_size);
+                        node->size = data_size;
                     }
                 }
                 /* Adresa de la care incepe urmatoarea lista */
@@ -181,9 +179,6 @@ init_heap(void *start_address, size_t num_lists, size_t bytes_per_list, int type
     return sfl;
 }
 
-void malloc_memory(sfl_t *sfl, size_t num_bytes) {
-}
-
 void free_memory(sfl_t *sfl, void *address) {
 }
 
@@ -193,7 +188,7 @@ void read_memory(void *address, size_t num_bytes) {
 void write_memory(void* address, char *data, size_t num_bytes) {
 }
 
-void dump_memory(sfl_t *sfl) {
+void dump_memory(sfl_t *sfl, dllist_t *allocated_list) {
     printf("+++++DUMP+++++\n");
     printf("Total memory: %ld bytes\n", sfl->total_memory);
     printf("Total allocated memory: %ld bytes\n", sfl->total_allocated_memory);
@@ -211,11 +206,17 @@ void dump_memory(sfl_t *sfl) {
             print_list_addresses(sfl->lists[i]);
         }
     }
+    
     printf("Allocated blocks : \n"); // Blocurile alocate
+    
+    // if (allocated_list->count > 0) {
+    //     print_list_addresses(allocated_list);
+    // }
 
     printf("-----DUMP-----\n");
 }
 
 
 void destroy_heap(sfl_t *sfl) {
+
 }

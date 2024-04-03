@@ -4,6 +4,7 @@
 #include <errno.h>
 #include "struct.h"
 #include "function.h"
+#include "function_malloc.h"
 
 /* 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 */
 /* valgrind -s --leak-check=full --show-leak-kinds=all --tool=memcheck --track-origins=yes ./*/
@@ -12,6 +13,7 @@
 
 int main() {
     sfl_t *sfl = NULL;
+	dllist_t *allocated_list = NULL;
     char input[MAX_INPUT_LENGTH];
 
     while (fgets(input, sizeof(input), stdin) != NULL) {
@@ -33,14 +35,14 @@ int main() {
 			if (DEBUG)
 				printf("Parametru MALLOC: num_bytes=%ld\n", num_bytes);
 			
-            malloc_memory(&sfl, num_bytes);
+            malloc_memory(sfl, num_bytes, &allocated_list);
 
         } else if (strcmp(command, "FREE") == 0) {
             void *address = (void*)strtol(strtok(NULL, " \n"), NULL, 16);
 			if (DEBUG)
 				printf("Parametru FREE: address=%p\n", address);
 			
-            free_memory(&sfl, address);
+            // free_memory(&sfl, address);
 
         } else if (strcmp(command, "READ") == 0) {
             void *address = (void*)strtol(strtok(NULL, " \n"), NULL, 16);
@@ -48,7 +50,7 @@ int main() {
 			if (DEBUG)
 	            printf("Parametri READ: address=%p, num_bytes=%ld\n", address, num_bytes);
 			
-            read_memory(address, num_bytes);
+            //read_memory(address, num_bytes);
 
         } else if (strcmp(command, "WRITE") == 0) {
             void *address = (void*)strtol(strtok(NULL, " \n"), NULL, 16);
@@ -57,12 +59,12 @@ int main() {
 			if (DEBUG)
 	            printf("Parametri WRITE: address=%p, data=\"%s\",  num_bytes=%ld\n", address, data, num_bytes);
 			
-            write_memory(address, data, num_bytes);
+            //write_memory(address, data, num_bytes);
 
         } else if (strcmp(command, "DUMP_MEMORY") == 0) {
-            dump_memory(sfl);
+            dump_memory(sfl, allocated_list);
         } else if (strcmp(command, "DESTROY_HEAP") == 0) {
-            destroy_heap(&sfl);
+            //destroy_heap(&sfl);
             break; /* Se iese din program */
         } else {
             printf("Invalid command\n");
