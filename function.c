@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 #include "function.h"
-#include "struct.h"
 
 #define DEBUG 0 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
 
@@ -21,40 +16,90 @@ dllist_t *dll_create(size_t data_size)
     return list;
 }
 
-void dll_add_nth_node(dllist_t* list, size_t n)
+// void dll_add_nth_node(dllist_t* list, size_t n)
+// {
+//     dll_block_t *prev, *curr;
+//     dll_block_t *new_node;
+
+//     if (!list) {
+//         return;
+//     }
+
+//     /* n >= list->size inseamna adaugarea unui nou nod la finalul listei. */
+//     if (n > list->count) {
+//         n = list->count;
+//     }
+
+//     curr = list->head;
+//     prev = NULL;
+//     while (n > 0) {
+//         prev = curr;
+//         curr = curr->next;
+//         --n;
+//     }
+
+//     new_node = malloc(sizeof(*new_node));
+//     new_node->info = NULL;
+
+//     new_node->next = curr;
+//     if (prev == NULL) {
+//         /* Adica n == 0. */
+//         list->head = new_node;
+//     } else {
+//         prev->next = new_node;
+//     }
+
+//     list->count++;
+// }
+
+void
+dll_add_nth_node(dllist_t* list, size_t n)
 {
-    dll_block_t *prev, *curr;
-    dll_block_t *new_node;
+	/* TODO */
+    DIE(!list, "The list is invalid!\n");
 
-    if (!list) {
-        return;
-    }
-
-    /* n >= list->size inseamna adaugarea unui nou nod la finalul listei. */
     if (n > list->count) {
         n = list->count;
     }
 
-    curr = list->head;
-    prev = NULL;
-    while (n > 0) {
-        prev = curr;
-        curr = curr->next;
-        --n;
-    }
+    // creere un nod nou
+    dll_block_t *nod;
+    nod = malloc(sizeof(*nod));
+    DIE(!nod, "Failed to add new node\n");
+    nod->info = NULL;
 
-    new_node = malloc(sizeof(*new_node));
-    new_node->info = NULL;
-
-    new_node->next = curr;
-    if (prev == NULL) {
-        /* Adica n == 0. */
-        list->head = new_node;
+    // cazul in care lista nu are inca niciun element
+    if (list->count == 0) {
+        // noul nod devine si urmatorul si anteriorul
+        list->head = nod;
+        nod->next = nod;
+        nod->prev = nod;
+        
+        list->count++;
+        return;
     } else {
-        prev->next = new_node;
-    }
+        // aflu pozitia nodului de pe pozitia n
+        // locul unde vrea sa inserez un nou nod
+        dll_block_t *nth_node = dll_get_nth_node(list, n);
+        // ... cred ca pot cu al n lea nod sa lucrez, sa fac la cazul general 
+        // dll_node_t *last = list->head->prev;
+        
+        // noi vrem sa adaugam nod in locul lui nth nod
+        // deci in loc sa ca nth nod sa pointeze catre prev il facem pe nod sa pointeze catre prev
+        nod->prev = nth_node->prev;
+        nod->next = nth_node;
+        // trebuie sa il fac pe cel anterior sa pointeze catre nod, nu catre nthnod
+        // cel anterior lui nth nod este nth_nod->prev
+        nth_node->prev->next = nod;
+        nth_node->prev = nod;
 
-    list->count++;
+        if (n == 0) {
+            list->head = nod;
+        }
+
+        list->count++;
+        return;
+    }
 }
 
 dll_block_t*
@@ -90,7 +135,7 @@ void print_list_addresses(dllist_t *list)
         printf("Adresele blocurilor din lista sunt:\n");
     
     for (size_t i = 0; i < list->count; i++) {
-        printf("%p ", current_block->address);
+        printf("0x%lx ", current_block->address);
         current_block = current_block->next;
     }
 
@@ -98,7 +143,7 @@ void print_list_addresses(dllist_t *list)
 }
 
 sfl_t*
-init_heap(void *start_address, size_t num_lists, size_t bytes_per_list, int type)
+init_heap(unsigned long start_address, size_t num_lists, size_t bytes_per_list, int type)
 {
     sfl_t *sfl = (sfl_t *)malloc(sizeof(sfl_t));
     if(!sfl) {
@@ -109,8 +154,8 @@ init_heap(void *start_address, size_t num_lists, size_t bytes_per_list, int type
     size_t hmax = bytes_per_list;
     if (DEBUG) {
         printf("hmax=%ld\n", hmax);
-        printf("start_address=%p\n", start_address);
-        printf("start_address2=%p\n", start_address + 8);
+        printf("start_address=%lu\n", start_address);
+        printf("start_address2=%lu\n", start_address + 8);
     }
 
     sfl->lists = (dllist_t **)malloc(hmax * sizeof(dllist_t *));
@@ -149,7 +194,7 @@ init_heap(void *start_address, size_t num_lists, size_t bytes_per_list, int type
                 start_address = start_address + bytes_per_list;
 
                 if (DEBUG) {
-                    printf("start_address %ld=%p\n", i, start_address);
+                    printf("start_address %ld=%lu\n", i, start_address);
                     print_list_addresses(sfl->lists[i]);
                 }
                
@@ -209,14 +254,54 @@ void dump_memory(sfl_t *sfl, dllist_t *allocated_list) {
     
     printf("Allocated blocks : \n"); // Blocurile alocate
     
-    // if (allocated_list->count > 0) {
-    //     print_list_addresses(allocated_list);
-    // }
+    if (allocated_list != NULL && allocated_list->count > 0) {
+        print_list_addresses(allocated_list);
+    }
 
     printf("-----DUMP-----\n");
 }
 
 
-void destroy_heap(sfl_t *sfl) {
+void destroy_heap(sfl_t **sfl, dllist_t **allocated_list)
+{
+    for (size_t i = 0; i < (*sfl)->bytes_per_list; i++) {
+        dllist_t *current_list = (*sfl)->lists[i];
+        if (!current_list) {
+            continue;
+        }
+        /* Parcurg fiecare nod din lista curenta si eliberez memoria pentru fiecare nod */
+        size_t count = (*sfl)->lists[i]->count;
 
+        for (size_t j = 0; j < count; j++) {
+            dll_block_t *temp = dll_remove_nth_node((*sfl)->lists[i], 0);
+            if (temp->info != NULL) {
+                free(temp->info);
+            }
+            free(temp); // Eliberează memoria alocată pentru nodul curent
+        }
+        free((*sfl)->lists[i]);
+    }
+    free((*sfl)->lists);
+    free((*sfl));
+
+    *sfl = NULL;
+
+    if (allocated_list == NULL || *allocated_list == NULL) {
+        return;
+    }
+
+    dll_block_t* nod = (*allocated_list)->head;
+    dll_block_t* next_nod = NULL;
+
+    for( unsigned int i = 0; i < (*allocated_list)->count; i++) {
+        next_nod = nod->next;
+        free(nod->info);
+        free(nod);
+        nod = next_nod;
+    }
+    free((*allocated_list));
+    (*allocated_list) = NULL;
+
+    return;
 }
+

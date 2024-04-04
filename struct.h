@@ -3,7 +3,7 @@
 
 // Strctura de nod
 typedef struct block_t {
-	void *address; /* Adresa de inceput a blocului */
+	unsigned long address; /* Adresa de inceput a blocului */
 	size_t size; /* Dimensiunea unui bloc */
 	
 	struct block_t *next, *prev;
