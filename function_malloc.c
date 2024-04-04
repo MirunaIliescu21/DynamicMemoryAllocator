@@ -1,6 +1,6 @@
 #include "function_malloc.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define DEBUG_REMOVE 0
 
 dll_block_t* dll_remove_nth_node(dllist_t* list, size_t n)
@@ -101,7 +101,7 @@ void print_block_info(dll_block_t *block)
         return;
     }
 
-    printf("Address: %lu\n", block->address);
+    printf("Address: 0x%lx\n", block->address);
     printf("Size: %ld\n", block->size);
     // printf("Next: %p\n", block->next);
     // printf("Prev: %p\n", block->prev);
@@ -253,7 +253,7 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
     sfl->num_malloc_calls++;
     sfl->total_allocated_memory += num_bytes;
     sfl->total_free_memory -= num_bytes;
-    
+
     dll_block_t *removed = dll_remove_nth_node(sfl->lists[index], 0);
 
     if (DEBUG) {
@@ -304,6 +304,97 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
     if (removed->info != NULL) {
         free(removed->info);
     }
+
+    free(removed);
+}
+
+int find_addr_position(dllist_t *allocated_list, unsigned long new_address)
+{
+    int position = -1;
+    dll_block_t *current_block = allocated_list->head;
+
+    if (DEBUG) {
+        printf("listsize=%ld\n", allocated_list->count);
+        printf("address=0x%lx\n", new_address);
+    }
+
+    /* Parcurgem lista pana dam de elementul cu aceeasi adresa ca cea cautat */
+    for (size_t i = 0; i < allocated_list->count; i++) {
+
+        if (DEBUG) {
+            printf("Adresa blocului curent este=0x%lx\n", current_block->address);
+        }
+
+        if (current_block->address == new_address) {
+            position = i;
+        }
+
+        current_block = current_block->next;
+    }
+
+    return position;
+}
+
+void free_memory(sfl_t *sfl, unsigned long address, dllist_t **allocated_list)
+{
+    /* Cautam in lista de blocuri alocate, pozitia blocului
+       ce are aceeasi adresa cu cea citita*/
+    if (DEBUG) {
+        printf("Parametrul address=0x%lx\n", address);
+    }
+
+    if (*allocated_list == NULL) {
+        if (DEBUG) {
+            printf("Nu s-a alocat memorie.\n");
+        }
+        return;
+    }
+
+    int pos = find_addr_position(*allocated_list, address);
+
+    if (DEBUG) {
+        printf("pos=%d\n", pos);
+    }
+
+    if (pos == -1) {
+        /* Nu exista nicun bloc cu acresa cautata */
+        printf("Invalid free\n");
+        return;
+    }
+
+    /* Daca am ajuns aici inseamna ca avem un bloc pe care putem sa il eliberam
+    si sa il adaugam in structura initiala */
+    sfl->num_free_calls++;
+
+    if (DEBUG) {
+        printf("Blocul pe care trebuie sa il eliberam se afla pe pozitia=%d\n", pos);
+    }
+
+    dll_block_t *removed = dll_remove_nth_node(*allocated_list, pos);
+    sfl->num_allocated_blocks--; /*s-a mai eliberat un bloc*/
+    sfl->total_allocated_memory -= removed->size;
+    /* s-a eliberat dim blocului scos */
+
+    if (DEBUG) {
+        printf("Informatiile blocului eliminat din lista allocated sunt :\n");
+        print_block_info(removed);
+    }
+
+    /* vrem sa stim unde adaugam nodul in heap */
+    /* il adaugam in lista aferenta dimensiunii sale, pe pozitia p*/
+    size_t p = find_insert_position(sfl->lists[removed->size - 1], removed->address);
+    if (DEBUG) {
+        printf("position in list %ld is= %ld\n\n", removed->size - 1, p);
+    }
+
+    dll_insert_nth_node(sfl->lists[removed->size - 1], p, removed->size, removed->address);
+    sfl->num_free_blocks++; /* s-a mai adaugat un bloc in sfl*/
+    sfl->total_free_memory += removed->size; /* s-a adaugat memorie */
+
+    if (removed->info != NULL) {
+        free(removed->info);
+    }
+
     free(removed);
 
 }

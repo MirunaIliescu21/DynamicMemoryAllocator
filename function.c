@@ -244,9 +244,6 @@ init_heap(unsigned long start_address, size_t num_lists, size_t bytes_per_list, 
     return sfl;
 }
 
-void free_memory(sfl_t *sfl, void *address) {
-}
-
 void read_memory(void *address, size_t num_bytes) {
 }
 
@@ -258,7 +255,7 @@ void dump_memory(sfl_t *sfl, dllist_t *allocated_list) {
     printf("Total memory: %ld bytes\n", sfl->total_memory);
     printf("Total allocated memory: %ld bytes\n", sfl->total_allocated_memory);
     printf("Total free memory: %ld bytes\n", sfl->total_free_memory);
-    printf("Number of free blocks: %ld\n", sfl->num_free_blocks);
+    printf("Free blocks: %ld\n", sfl->num_free_blocks);
     printf("Number of allocated blocks: %ld\n", sfl->num_allocated_blocks);
     printf("Number of malloc calls: %ld\n", sfl->num_malloc_calls);
     printf("Number of fragmentations: %ld\n", sfl->num_fragmentations);
@@ -272,7 +269,7 @@ void dump_memory(sfl_t *sfl, dllist_t *allocated_list) {
         }
     }
     
-    printf("Allocated blocks : \n"); // Blocurile alocate
+    printf("Allocated blocks : "); // Blocurile alocate
     
     if (allocated_list != NULL && allocated_list->count > 0) {
         print_list_addresses_for_alloc(allocated_list);

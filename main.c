@@ -8,7 +8,7 @@
 
 /* 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 */
 /* valgrind -s --leak-check=full --show-leak-kinds=all --tool=memcheck --track-origins=yes ./*/
-#define DEBUG 1 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
+#define DEBUG 0 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
 
 
 int main() {
@@ -38,11 +38,14 @@ int main() {
             malloc_memory(sfl, num_bytes, &allocated_list);
 
         } else if (strcmp(command, "FREE") == 0) {
-            unsigned long address = strtol(strtok(NULL, " \n"), NULL, 16);
+			// unsigned long address;
+            // sscanf(input, "%lx", &address);
+			unsigned long address = strtol(strtok(NULL, " \n"), NULL, 16);
+
 			if (DEBUG)
-				printf("Parametru FREE: address=%lu\n", address);
+				printf("Parametru FREE: address=0x%lx\n", address);
 			
-            // free_memory(&sfl, address);
+            free_memory(sfl, address, &allocated_list);
 
         } else if (strcmp(command, "READ") == 0) {
             unsigned long address = strtol(strtok(NULL, " \n"), NULL, 16);
@@ -57,7 +60,7 @@ int main() {
             char *data = strtok(NULL, "\"");
             size_t num_bytes = atoi(strtok(NULL, " \n"));
 			if (DEBUG)
-	            printf("Parametri WRITE: address=%lu, data=\"%s\",  num_bytes=%ld\n", address, data, num_bytes);
+	            printf("Parametri WRITE: address=0x%lx, data=\"%s\",  num_bytes=%ld\n", address, data, num_bytes);
 			
             //write_memory(address, data, num_bytes);
 
