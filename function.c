@@ -142,6 +142,26 @@ void print_list_addresses(dllist_t *list)
     printf("\n");
 }
 
+void print_list_addresses_for_alloc(dllist_t *list)
+{
+    if (!list) {
+        printf("Lista este nulă.\n");
+        return;
+    }
+
+    dll_block_t *current_block = list->head;
+
+    if (DEBUG)
+        printf("Adresele blocurilor din lista sunt:\n");
+    
+    for (size_t i = 0; i < list->count; i++) {
+        printf("(0x%lx - %ld) ", current_block->address, current_block->size);
+        current_block = current_block->next;
+    }
+
+    printf("\n");
+}
+
 sfl_t*
 init_heap(unsigned long start_address, size_t num_lists, size_t bytes_per_list, int type)
 {
@@ -255,7 +275,7 @@ void dump_memory(sfl_t *sfl, dllist_t *allocated_list) {
     printf("Allocated blocks : \n"); // Blocurile alocate
     
     if (allocated_list != NULL && allocated_list->count > 0) {
-        print_list_addresses(allocated_list);
+        print_list_addresses_for_alloc(allocated_list);
     }
 
     printf("-----DUMP-----\n");

@@ -197,9 +197,6 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
     if (!sfl) {
         return;
     }
-    sfl->num_malloc_calls++;
-    sfl->total_allocated_memory += num_bytes;
-    sfl->total_free_memory -= num_bytes;
 
     if (DEBUG) {
         printf("Numarul de liste este %ld\n", sfl->bytes_per_list);
@@ -251,6 +248,12 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
         return;
     }
 
+    /* Daca s-a ajuns aici inseamna ca exista un bloc ce poate fi alocat */
+    sfl->num_allocated_blocks++;
+    sfl->num_malloc_calls++;
+    sfl->total_allocated_memory += num_bytes;
+    sfl->total_free_memory -= num_bytes;
+    
     dll_block_t *removed = dll_remove_nth_node(sfl->lists[index], 0);
 
     if (DEBUG) {
@@ -267,19 +270,35 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
 
     if (removed->size == num_bytes) {
         /* Existe o lista in sfl care are blocuri de dimineansiunea num_bytes*/
-
+        sfl->num_free_blocks--;
         if (DEBUG) {
             printf("Blocul nu necesita fragmentare.\n"); 
             printf("blocksize=%ld\n\n", removed->size);
         }
+
         dll_insert_nth_node(*allocated_list, position, removed->size, removed->address);
-        sfl->num_allocated_blocks++;
     } else {
 
         if (DEBUG) {
             printf("Blocul necesita fragmentare.\n");  
         }
         sfl->num_fragmentations++;
+        dll_insert_nth_node(*allocated_list, position, num_bytes, removed->address);
+        /* acum trebuie sa gasesc pozitia unude trebuie sa adaug memoria ramasa*/
+        size_t newsz = removed->size - num_bytes;
+        unsigned long newaddr = removed->address + num_bytes;
+
+        if(DEBUG) {
+            printf(" Informatiile blocului pe care trebuie sa il adaug din nou in struct initiala ");
+            printf(" newaddress=0x%lx si newsize=%ld\n", newaddr, newsz);
+        }
+
+        size_t p = find_insert_position(sfl->lists[newsz - 1], newaddr);
+        if (DEBUG) {
+            printf("position in list %ld is= %ld\n\n", newsz - 1, p);
+        }
+        dll_insert_nth_node(sfl->lists[newsz - 1], p, newsz, newaddr);
+
     }
 
     if (removed->info != NULL) {
@@ -287,85 +306,7 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
     }
     free(removed);
 
-
-
-    // /* Daca s-a ajuns aici inseamna ca exista un bloc ce poate fi alocat */
-
-    // if (DEBUG) {
-    //     printf("Dimensiunea inainte de adaugare a listei este %ld\n", (*allocated_list)->count);
-    // }
-
-    // if (block->size == num_bytes) {
-    //     /* Existe o lista in sfl care are blocuri de dimineansiunea num_bytes*/
-
-    //     if (DEBUG) {
-    //         printf("Blocul nu necesita fragmentare.\n"); 
-    //         printf("blocksize=%ld\n\n", block->size);
-    //     }
-
-        
-    //     size_t position = find_insert_position(*allocated_list, block->address);
-    //     dll_insert_nth_node(*allocated_list, position, block);
-
-    //     printf("IN IF3\n");
-    //     for (size_t i = 0; i < sfl->bytes_per_list; i++) {
-    //         if (sfl->lists[i]->count > 0) {
-    //             /* Lista nu este goala, deci are blocuri ce contin adrese libere */
-    //             printf("Blocks with %ld bytes - %ld free block(s) : ", i + 1, sfl->lists[i]->count);
-    //             print_list_addresses(sfl->lists[i]);
-    //         }
-    //     }
-
-    //     sfl->num_allocated_blocks++;
-    //     /* Am adaugat nodul in lista de blocuri alocate */
-    //     if (DEBUG) {
-    //         printf("Pozitia pe care adaug in lista este %ld\n", position);
-    //         printf("Noua dimensiune a listei este %ld\n", (*allocated_list)->count);
-    //         access_allocated_blocks(*allocated_list);
-    //         print_list_addresses(sfl->lists[7]);
-    //     }
-
-    //     /* Acum trebuie sa il elimin din lista */
-    //     /* Stim ca lista din care trebuie sa eliniman blocul
-    //     are blocuri de dimensiunea sizeului blocului selectat */
-
-    //     dll_block_t *removed;
-    //     removed = dll_remove_nth_node(sfl->lists[block->size - 1], 0);
-
-    //     if (DEBUG) {
-    //         printf("Informatiile blocului eliminat din lista sunt :\n");
-    //         print_block_info(removed);
-    //     }
-
-    // } else {
-    //     if (DEBUG) {
-    //         printf("Blocul necesita fragmentare.\n");  
-    //     }
-    //     sfl->num_fragmentations++;
-
-    // }
-    
-
-
-    // for (size_t i = 0; i < (*sfl)->bytes_per_list; i++) {
-
-    //     if ((*sfl)->lists[i]->data_size == num_bytes) {
-
-    //         dllist_t *curr_list = (*sfl)->lists[i];
-    //         if (curr_list->count > 0) {
-
-    //             // scot nodul pe care il vreau
-    //             dll_block_t *removed = dll_remove_nth_node(curr_list, 0);
-    //             printf("removed_address=%p SIZE_NOD=%ld\n", removed->address, removed->size);
-    //             dll_add_node_addr(allocated_list, removed->address, num_bytes);
-    //             if (DEBUG) {
-    //                 printf("Numarul de noduri din lista alocata = %ld. \n", (*allocated_list)->count);
-    //                 print_list_addresses(allocated_list);
-    //             }
-                
-    //             (*sfl)->num_allocated_blocks++;
-    //         }
-    //     }
-    // }
 }
+
+
 
