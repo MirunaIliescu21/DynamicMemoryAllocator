@@ -19,9 +19,7 @@ void print_list_addresses_for_alloc(dllist_t *list);
 sfl_t *init_heap(unsigned long start_address, size_t num_lists,
                  size_t bytes_per_list, int type);
 
-// void free_memory(sfl_t *sfl, void* address);
 // void read_memory(void* address, size_t num_bytes);
-// void write_memory(void* address, char* data, size_t num_bytes);
 void dump_memory(sfl_t *sfl, dllist_t *allocated_list);
 void destroy_heap(sfl_t **sfl, dllist_t **allocated_list);
 

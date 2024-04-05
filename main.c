@@ -5,10 +5,11 @@
 #include "struct.h"
 #include "function.h"
 #include "function_malloc.h"
+#include "function_write_read.h"
 
 /* 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 */
 /* valgrind -s --leak-check=full --show-leak-kinds=all --tool=memcheck --track-origins=yes ./*/
-#define DEBUG 0 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
+#define DEBUG 1 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
 
 
 int main() {
@@ -62,7 +63,12 @@ int main() {
 			if (DEBUG)
 	            printf("Parametri WRITE: address=0x%lx, data=\"%s\",  num_bytes=%ld\n", address, data, num_bytes);
 			
-            //write_memory(address, data, num_bytes);
+            if (write_memory(allocated_list, address, data, num_bytes) == 1) {
+				printf("Segmentation fault (core dumped)\n");
+				dump_memory(sfl, allocated_list);
+				destroy_heap(&sfl, &allocated_list);
+				break; /* se iese din program */
+			}
 
         } else if (strcmp(command, "DUMP_MEMORY") == 0) {
             dump_memory(sfl, allocated_list);

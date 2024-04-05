@@ -135,7 +135,7 @@ void print_list_addresses(dllist_t *list)
         printf("Adresele blocurilor din lista sunt:\n");
     
     for (size_t i = 0; i < list->count; i++) {
-        printf("0x%lx ", current_block->address);
+        printf(" 0x%lx", current_block->address);
         current_block = current_block->next;
     }
 
@@ -155,11 +155,11 @@ void print_list_addresses_for_alloc(dllist_t *list)
         printf("Adresele blocurilor din lista sunt:\n");
     
     for (size_t i = 0; i < list->count; i++) {
-        printf("(0x%lx - %ld) ", current_block->address, current_block->size);
+        printf(" (0x%lx - %ld)", current_block->address, current_block->size);
         current_block = current_block->next;
     }
 
-    printf("\n");
+    //printf("\n");
 }
 
 sfl_t*
@@ -244,11 +244,9 @@ init_heap(unsigned long start_address, size_t num_lists, size_t bytes_per_list, 
     return sfl;
 }
 
-void read_memory(void *address, size_t num_bytes) {
-}
+// void read_memory(void *address, size_t num_bytes) {
+// }
 
-void write_memory(void* address, char *data, size_t num_bytes) {
-}
 
 void dump_memory(sfl_t *sfl, dllist_t *allocated_list) {
     printf("+++++DUMP+++++\n");
@@ -264,18 +262,18 @@ void dump_memory(sfl_t *sfl, dllist_t *allocated_list) {
     for (size_t i = 0; i < sfl->bytes_per_list; i++) {
         if (sfl->lists[i]->count > 0) {
             /* Lista nu este goala, deci are blocuri ce contin adrese libere */
-            printf("Blocks with %ld bytes - %ld free block(s) : ", i + 1, sfl->lists[i]->count);
+            printf("Blocks with %ld bytes - %ld free block(s) :", i + 1, sfl->lists[i]->count);
             print_list_addresses(sfl->lists[i]);
         }
     }
     
-    printf("Allocated blocks : "); // Blocurile alocate
+    printf("Allocated blocks :"); // Blocurile alocate
     
     if (allocated_list != NULL && allocated_list->count > 0) {
         print_list_addresses_for_alloc(allocated_list);
     }
 
-    printf("-----DUMP-----\n");
+    printf("\n-----DUMP-----\n");
 }
 
 
