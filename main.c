@@ -54,7 +54,12 @@ int main() {
 			if (DEBUG)
 	            printf("Parametri READ: address=%lu, num_bytes=%ld\n", address, num_bytes);
 			
-            //read_memory(address, num_bytes);
+            if (read_memory(allocated_list, address, num_bytes) == 1) {
+				printf("Segmentation fault (core dumped)\n");
+				dump_memory(sfl, allocated_list);
+				destroy_heap(&sfl, &allocated_list);
+				break; /* se iese din program */
+			}
 
         } else if (strcmp(command, "WRITE") == 0) {
             unsigned long address = strtol(strtok(NULL, " \n"), NULL, 16);

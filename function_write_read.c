@@ -93,6 +93,18 @@ int check_memory(dllist_t *alloc_list, unsigned long addr, size_t num_bytes) {
 
 }
 
+void remove_quotes(char *str) {
+    int len = strlen(str);
+    int i, j;
+    for (i = 0, j = 0; i < len; i++) {
+        if (str[i] != '"') {
+            str[j] = str[i];
+            j++;
+        }
+    }
+    str[j] = '\0';
+}
+
 /* Fac o functie de tip int care sa imi returneze 0 in cazul in care se 
  poate scrie in memorie si 1 atunci cand nu se poate scrie in memorie
  si trebuie apelate functiile de dump si de destroy */
@@ -120,7 +132,31 @@ int write_memory(dllist_t *allocated_list,
     din blocul in care se afla adresa*/
     long diff = num_bytes - size_in_block; /* de cati bytes mai avem nevoie 
     pentru a cuprinde intrega informatie */
-    
+
+    int index = 0;
+    unsigned long idx_adrr = address - nod->address; 
+    /* idx_adrr reprezinta indicele de pe care incep sa scriu in bloc */
+
+    remove_quotes(data); /* elimin ghilimelele */
+    if (DEBUG) {
+        printf("Sirul fara ghilimele: %s\n", data);
+    }
+
+    for (size_t i = idx_adrr; i < nod->size && index < num_bytes; i++) {
+        // nod->info[i] = data[index];
+        index++;
+    }    
 
     return 0;
+}
+
+int read_memory(dllist_t *alloc_list, unsigned long addr, size_t num_bytes) {
+    /* Verific daca se poate scrie in memorie */
+    if (alloc_list == NULL) {
+        return 1;
+    }
+
+    if (check_memory(alloc_list, addr, num_bytes) == 1) {
+        return 1;
+    }
 }
