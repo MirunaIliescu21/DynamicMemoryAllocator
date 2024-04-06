@@ -3,21 +3,21 @@
 
 // Strctura de nod
 typedef struct block_t {
-	unsigned long address; /* Adresa de inceput a blocului */
-	size_t size; /* Dimensiunea unui bloc */
+	// unsigned long address; /* Adresa de inceput a blocului */
+	// size_t size; /* Dimensiunea unui bloc */
 	
 	struct block_t *next, *prev;
-	void *info; /* Pentru datele de orice tip */
+	void *data; /* Pentru datele de orice tip */
 
 } dll_block_t;
 
-// typedef struct info_t {
-// 	unsigned long address;
-// 	size_t size;
-// 	int reconstitution_type;
-// 	char *data;
+typedef struct info_t {
+	unsigned long address;
+	size_t size;
+	// int reconstitution_type;
+	char *data;
 
-// }info_t;
+}info_t;
 
 // Structura de lista
 typedef struct {

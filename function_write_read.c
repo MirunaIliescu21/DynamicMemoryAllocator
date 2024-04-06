@@ -12,7 +12,7 @@ dll_block_t *dll_address(dllist_t *list, unsigned long addr) {
         return NULL;
     }
 
-    if (addr < list->head->address) {
+    if (addr < ((info_t *)list->head->data)->address) {
         /* blocurile din lista sunt ord cresc, deci nu exista
          o adresa <= cu adresa ceruta*/
         if (DEBUG) {
@@ -22,7 +22,7 @@ dll_block_t *dll_address(dllist_t *list, unsigned long addr) {
     }
 
     dll_block_t *nod = list->head;
-    while (nod->next != list->head && addr >= nod->next->address) {
+    while (nod->next != list->head && addr >= ((info_t *)nod->next->data)->address) {
         nod = nod->next;
     }
     
@@ -31,7 +31,7 @@ dll_block_t *dll_address(dllist_t *list, unsigned long addr) {
 
 /*functia returneaza adresa urmatorului bloc daca aceastea ar fi consecutive*/
 unsigned long end_address(dll_block_t *nod) {
-    unsigned long end = nod->address + nod->size;
+    unsigned long end = ((info_t *)nod->data)->address + ((info_t *)nod->data)->size;
     // if (DEBUG) {
     //     printf("end_address=0x%lx\n", end);
     // }
@@ -77,16 +77,16 @@ int check_memory(dllist_t *alloc_list, unsigned long addr, size_t num_bytes) {
 
     /* Pargur nodurile pana cand diff este egal cu 0 sau adresele nu mai sunt consecutive */
     while (diff > 0 && nod->next != alloc_list->head) {
-        if (end_address(nod) != nod->next->address) {
+        if (end_address(nod) != ((info_t *)nod->next->data)->address) {
             if (DEBUG) {
                 printf("end_address=0x%lx nod->next->adr=0x%lx\n",
-                        end_address(nod), nod->next->address);
+                        end_address(nod), ((info_t *)nod->next->data)->address);
             }
             return 1; /* caz seg fault */
         }
 
         nod = nod->next;
-        diff = diff - nod->size;
+        diff = diff - ((info_t *)nod->data)->size;
     }
     
     return 0;
@@ -134,7 +134,7 @@ int write_memory(dllist_t *allocated_list,
     pentru a cuprinde intrega informatie */
 
     size_t index = 0;
-    unsigned long idx_adrr = address - nod->address; 
+    unsigned long idx_adrr = address - ((info_t *)nod->data)->address; 
     /* idx_adrr reprezinta indicele de pe care incep sa scriu in bloc */
 
     remove_quotes(data); /* elimin ghilimelele */
@@ -142,21 +142,21 @@ int write_memory(dllist_t *allocated_list,
         printf("Sirul fara ghilimele: %s\n", data);
     }
 
-    char *v = nod->info;
+    char *v = ((info_t *)nod->data)->data;
 
-    for (size_t i = idx_adrr; i < nod->size && index < num_bytes; i++) {
+    for (size_t i = idx_adrr; i < ((info_t *)nod->data)->size && index < num_bytes; i++) {
         v[i] = data[index];
         index++;
     }
 
     while (diff > 0) {
         nod = nod->next;
-        v = nod->info; /* scriu la adresa urm nod */
-        for (size_t i = 0; i < nod->size && index < num_bytes; i++) {
+        v = ((info_t *)nod->data)->data; /* scriu la adresa urm nod */
+        for (size_t i = 0; i < ((info_t *)nod->data)->size && index < num_bytes; i++) {
             v[i] = data[index];
             index++;
         }
-        diff = diff - nod->size;
+        diff = diff - ((info_t *)nod->data)->size;
     } 
 
     return 0;
@@ -179,27 +179,27 @@ int read_memory(dllist_t *alloc_list, unsigned long addr, size_t num_bytes) {
     pentru a cuprinde intrega informatie */
 
     size_t index = 0;
-    unsigned long idx_adrr = addr - nod->address; 
+    unsigned long idx_adrr = addr - ((info_t *)nod->data)->address; 
     /* idx_adrr reprezinta indicele de pe care incep sa scriu in bloc */
     
-    char *v = nod->info;
+    char *v = ((info_t *)nod->data)->data;;
     char *str = malloc((num_bytes + 1) * sizeof(char)); /* num_bytes + \0*/
     /*str este sirul pe care il afisez */
 
     memset(str, 0, (num_bytes + 1) * sizeof(char));
-    for (size_t i = idx_adrr; i < nod->size && index < num_bytes; i++) {
+    for (size_t i = idx_adrr; i < ((info_t *)nod->data)->size && index < num_bytes; i++) {
         str[index] = v[i];
         index++;
     }
     /* trecem la urm nod/noduri pt a citi din ele */
     while (diff > 0) {
         nod = nod->next;
-        v = nod->info; /* citesc de la adresa urm nod */
-        for (size_t i = 0; i < nod->size && index < num_bytes; i++) {
+        v = ((info_t *)nod->data)->data; /* citesc de la adresa urm nod */
+        for (size_t i = 0; i < ((info_t *)nod->data)->size && index < num_bytes; i++) {
             str[index] = v[i];
             index++;
         }
-        diff = diff - nod->size;
+        diff = diff - ((info_t *)nod->data)->size;
     }
 
     /*afisez str*/

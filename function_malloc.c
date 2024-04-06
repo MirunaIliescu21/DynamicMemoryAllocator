@@ -80,9 +80,9 @@ dll_block_t *find_block(sfl_t *sfl, size_t num_bytes)
         /* Verificam blocurile din lista curenta */
         dll_block_t *current_block = current_list->head;
         if (DEBUG) {
-            printf("Blocul curent are dim=%ld\n", current_block->size);
+            printf("Blocul curent are dim=%ld\n", ((info_t *)current_block->data)->size);
         }
-        if (current_block->size >= num_bytes ) {
+        if (((info_t *)current_block->data)->size >= num_bytes ) {
             /* Blocul curent este adecvat pentru alocare */
             return current_block;
         } else {
@@ -101,8 +101,8 @@ void print_block_info(dll_block_t *block)
         return;
     }
 
-    printf("Address: 0x%lx\n", block->address);
-    printf("Size: %ld\n", block->size);
+    printf("Address: 0x%lx\n", ((info_t *)block->data)->address);
+    printf("Size: %ld\n", ((info_t *)block->data)->size);
     // printf("Next: %p\n", block->next);
     // printf("Prev: %p\n", block->prev);
 }
@@ -117,7 +117,7 @@ void access_allocated_blocks(dllist_t *allocated_list)
     dll_block_t *current_block = allocated_list->head;
 
     for (size_t i = 0; i < allocated_list->count; i++) {
-        printf("Adresa blocului: %lu, Dimensiunea blocului: %ld\n", current_block->address, current_block->size);
+        printf("Adresa blocului: %lu, Dimensiunea blocului: %ld\n", ((info_t *)current_block->data)->address, ((info_t *)current_block->data)->size);
         current_block = current_block->next;
     }
 }
@@ -128,7 +128,7 @@ size_t find_insert_position(dllist_t *allocated_list, unsigned long new_address)
     dll_block_t *current_block = allocated_list->head;
 
     // Parcurgem lista până când găsim un bloc cu o adresă mai mare decât cea a noului nod
-    for (size_t i = 0; i < allocated_list->count && current_block->address < new_address; i++) {
+    for (size_t i = 0; i < allocated_list->count && ((info_t *)current_block->data)->address < new_address; i++) {
         current_block = current_block->next;
         position++;
     }
@@ -147,10 +147,15 @@ void dll_insert_nth_node(dllist_t* list, size_t pos, size_t size, unsigned long 
 
     dll_block_t *nod;
     nod = malloc(sizeof(*nod));
-    nod->info = malloc(size * sizeof(char));
-    DIE(!nod->info, "Eroare la alocarea memoriei pt campul info\n");
-    nod->address = address;
-    nod->size= size;
+    DIE(!nod, "Failed to add new node\n");
+    nod->data = malloc(sizeof(info_t));
+    DIE(!nod->data, "Failed to alloc new node info\n");
+
+    ((info_t *)nod->data)->data = malloc (size * sizeof(char));
+    DIE(!((info_t *)nod->data)->data, "Eroare la alocarea memoriei pt camp data\n");
+
+    ((info_t *)nod->data)->address = address;
+    ((info_t *)nod->data)->size = size;
 
     if (DEBUG) {
         print_block_info(nod);
@@ -234,11 +239,12 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
         /* Verificam blocurile din lista curenta */
         dll_block_t *current_block = current_list->head;
 
-        if (current_block->size >= num_bytes ) {
+        if (((info_t *)current_block->data)->size >= num_bytes ) {
             /* Blocul curent este adecvat pentru alocare */
             index = i;
             if (DEBUG) {
-                printf("Blocul curent are dim=%ld si face parte din lista de pe pozitia=%d\n", current_block->size, index);
+                printf("Blocul curent are dim=%ld si face parte din lista de pe pozitia=%d\n",
+                ((info_t *)current_block->data)->size, index);
             }
         }
     }
@@ -262,32 +268,33 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
         print_block_info(removed);
     }
 
-    size_t position = find_insert_position(*allocated_list, removed->address);
+    size_t position = find_insert_position(*allocated_list, ((info_t *)removed->data)->address);
     
     if (DEBUG) {
         printf("position=%ld\n\n", position);
     }
 
 
-    if (removed->size == num_bytes) {
+    if (((info_t *)removed->data)->size == num_bytes) {
         /* Existe o lista in sfl care are blocuri de dimineansiunea num_bytes*/
         sfl->num_free_blocks--;
         if (DEBUG) {
             printf("Blocul nu necesita fragmentare.\n"); 
-            printf("blocksize=%ld\n\n", removed->size);
+            printf("blocksize=%ld\n\n", ((info_t *)removed->data)->size);
         }
 
-        dll_insert_nth_node(*allocated_list, position, removed->size, removed->address);
+        dll_insert_nth_node(*allocated_list, position, ((info_t *)removed->data)->size,
+                            ((info_t *)removed->data)->address);
     } else {
 
         if (DEBUG) {
             printf("Blocul necesita fragmentare.\n");  
         }
         sfl->num_fragmentations++;
-        dll_insert_nth_node(*allocated_list, position, num_bytes, removed->address);
+        dll_insert_nth_node(*allocated_list, position, num_bytes, ((info_t *)removed->data)->address);
         /* acum trebuie sa gasesc pozitia unude trebuie sa adaug memoria ramasa*/
-        size_t newsz = removed->size - num_bytes;
-        unsigned long newaddr = removed->address + num_bytes;
+        size_t newsz = ((info_t *)removed->data)->size - num_bytes;
+        unsigned long newaddr = ((info_t *)removed->data)->address + num_bytes;
 
         if(DEBUG) {
             printf(" Informatiile blocului pe care trebuie sa il adaug din nou in struct initiala ");
@@ -302,8 +309,12 @@ void malloc_memory(sfl_t *sfl, size_t num_bytes, dllist_t **allocated_list)
 
     }
 
-    if (removed->info != NULL) {
-        free(removed->info);
+    if (((info_t *)removed->data)->data != NULL) {
+        free(((info_t *)removed->data)->data);
+    }
+
+    if (removed->data != NULL) {
+        free(removed->data);
     }
 
     free(removed);
@@ -323,10 +334,10 @@ int find_addr_position(dllist_t *allocated_list, unsigned long new_address)
     for (size_t i = 0; i < allocated_list->count; i++) {
 
         if (DEBUG) {
-            printf("Adresa blocului curent este=0x%lx\n", current_block->address);
+            printf("Adresa blocului curent este=0x%lx\n", ((info_t *)current_block->data)->address);
         }
 
-        if (current_block->address == new_address) {
+        if (((info_t *)current_block->data)->address == new_address) {
             position = i;
         }
 
@@ -373,7 +384,7 @@ void free_memory(sfl_t *sfl, unsigned long address, dllist_t **allocated_list)
 
     dll_block_t *removed = dll_remove_nth_node(*allocated_list, pos);
     sfl->num_allocated_blocks--; /*s-a mai eliberat un bloc*/
-    sfl->total_allocated_memory -= removed->size;
+    sfl->total_allocated_memory -= ((info_t *)removed->data)->size;
     /* s-a eliberat dim blocului scos */
 
     if (DEBUG) {
@@ -383,17 +394,29 @@ void free_memory(sfl_t *sfl, unsigned long address, dllist_t **allocated_list)
 
     /* vrem sa stim unde adaugam nodul in heap */
     /* il adaugam in lista aferenta dimensiunii sale, pe pozitia p*/
-    size_t p = find_insert_position(sfl->lists[removed->size - 1], removed->address);
+    size_t p = find_insert_position(sfl->lists[((info_t *)removed->data)->size - 1],
+                                    ((info_t *)removed->data)->address);
     if (DEBUG) {
-        printf("position in list %ld is= %ld\n\n", removed->size - 1, p);
+        printf("position in list %ld is= %ld\n\n", ((info_t *)removed->data)->size - 1, p);
     }
 
-    dll_insert_nth_node(sfl->lists[removed->size - 1], p, removed->size, removed->address);
-    sfl->num_free_blocks++; /* s-a mai adaugat un bloc in sfl*/
-    sfl->total_free_memory += removed->size; /* s-a adaugat memorie */
+    // size_t sz = ((info_t *)removed->data)->size;
+    // unsigned long addr = ((info_t *)removed->data)->address;
 
-    if (removed->info != NULL) {
-        free(removed->info);
+    dll_insert_nth_node(sfl->lists[((info_t *)removed->data)->size - 1], p, 
+                        ((info_t *)removed->data)->size,
+                        ((info_t *)removed->data)->address);
+
+    sfl->num_free_blocks++; /* s-a mai adaugat un bloc in sfl*/
+    // sfl->total_free_memory += ((info_t *)removed->data)->size; /* s-a adaugat memorie */
+    sfl->total_free_memory += ((info_t *)removed->data)->size; /* s-a adaugat memorie */
+
+    if (((info_t *)removed->data)->data != NULL) {
+        free(((info_t *)removed->data)->data);
+    }
+    
+    if (removed->data != NULL) {
+        free(removed->data);
     }
 
     free(removed);

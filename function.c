@@ -1,6 +1,7 @@
 #include "function.h"
 
 #define DEBUG 0 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
+#define DEBUG_DESTROY 1
 
 /* Implementarea functiilor */
 
@@ -30,7 +31,8 @@ dll_add_nth_node(dllist_t* list, size_t n)
     dll_block_t *nod;
     nod = malloc(sizeof(*nod));
     DIE(!nod, "Failed to add new node\n");
-    nod->info = NULL;
+    nod->data = malloc(sizeof(info_t));
+    DIE(!nod->data, "Failed to alloc new node info\n");
 
     // cazul in care lista nu are inca niciun element
     if (list->count == 0) {
@@ -99,7 +101,7 @@ void print_list_addresses(dllist_t *list)
         printf("Adresele blocurilor din lista sunt:\n");
     
     for (size_t i = 0; i < list->count; i++) {
-        printf(" 0x%lx", current_block->address);
+        printf(" 0x%lx", ((info_t *)current_block->data)->address);
         current_block = current_block->next;
     }
 
@@ -119,7 +121,7 @@ void print_list_addresses_for_alloc(dllist_t *list)
         printf("Adresele blocurilor din lista sunt:\n");
     
     for (size_t i = 0; i < list->count; i++) {
-        printf(" (0x%lx - %ld)", current_block->address, current_block->size);
+        printf(" (0x%lx - %ld)", ((info_t *)current_block->data)->address, ((info_t *)current_block->data)->size);
         current_block = current_block->next;
     }
 
@@ -155,7 +157,7 @@ init_heap(unsigned long start_address, size_t num_lists, size_t bytes_per_list, 
     for (size_t i = 0; i < hmax; i++) {
 
         size_t data_size = i + 1;
-        sfl->lists[i] = dll_create(data_size);
+        sfl->lists[i] = dll_create(sizeof(info_t));
         if ((i + 1) >= 8 && ((i + 1) & i) == 0) {
             if (cnt < num_lists) {
                 /* verif daca este o puetere a lui 2 >= 8 si
@@ -170,8 +172,11 @@ init_heap(unsigned long start_address, size_t num_lists, size_t bytes_per_list, 
                     dll_add_nth_node(sfl->lists[i], j);
                     dll_block_t *node = dll_get_nth_node(sfl->lists[i], j);
                     if (node != NULL) {
-                        node->address = start_address + (j * data_size);
-                        node->size = data_size;
+                        // node->address = start_address + (j * data_size);
+                        // node->size = data_size;
+                        ((info_t *)node->data)->address = start_address + (j * data_size);
+                        ((info_t *)node->data)->size = data_size;
+                        ((info_t *)node->data)->data = NULL;
                     }
                 }
                 /* Adresa de la care incepe urmatoarea lista */
@@ -241,8 +246,67 @@ void dump_memory(sfl_t *sfl, dllist_t *allocated_list) {
 }
 
 
-void destroy_heap(sfl_t **sfl, dllist_t **allocated_list)
-{
+// void destroy_heap(sfl_t **sfl, dllist_t **allocated_list)
+// {
+//     for (size_t i = 0; i < (*sfl)->bytes_per_list; i++) {
+//         dllist_t *current_list = (*sfl)->lists[i];
+//         if (!current_list) {
+//             continue;
+//         }
+//         /* Parcurg fiecare nod din lista curenta si eliberez memoria pentru fiecare nod */
+//         size_t count = (*sfl)->lists[i]->count;
+
+//         for (size_t j = 0; j < count; j++) {
+//             dll_block_t *temp = dll_remove_nth_node((*sfl)->lists[i], 0);
+//             if (((info_t *)temp->data)->data != NULL) {
+//                 free(((info_t *)temp->data)->data);
+//             }
+
+//             if (temp->data != NULL) {
+//                 free(temp->data);
+//             }
+
+//             free(temp); // Eliberează memoria alocată pentru nodul curent
+//         }
+
+//         free((*sfl)->lists[i]);
+//     }
+//     free((*sfl)->lists);
+//     free((*sfl));
+
+//     *sfl = NULL;
+
+//     return;
+
+//     if (allocated_list == NULL || *allocated_list == NULL) {
+//         return;
+//     }
+
+//     dll_block_t* nod = (*allocated_list)->head;
+//     dll_block_t* next_nod = NULL;
+
+//     for( unsigned int i = 0; i < (*allocated_list)->count; i++) {
+//         next_nod = nod->next;
+//         if (((info_t *)nod->data)->data != NULL) {
+//             free(((info_t *)nod->data)->data);
+//         }
+//         free(nod->data);
+//         free(nod);
+
+//         nod = next_nod;
+//     }
+
+//     free((*allocated_list));
+//     (*allocated_list) = NULL;
+
+//     return;
+// }
+
+void destroy_heap(sfl_t **sfl, dllist_t **allocated_list) {
+    if (sfl == NULL || *sfl == NULL) {
+        return;
+    }
+
     for (size_t i = 0; i < (*sfl)->bytes_per_list; i++) {
         dllist_t *current_list = (*sfl)->lists[i];
         if (!current_list) {
@@ -253,16 +317,19 @@ void destroy_heap(sfl_t **sfl, dllist_t **allocated_list)
 
         for (size_t j = 0; j < count; j++) {
             dll_block_t *temp = dll_remove_nth_node((*sfl)->lists[i], 0);
-            if (temp->info != NULL) {
-                free(temp->info);
+            if (((info_t *)temp->data)->data != NULL) {
+                free(((info_t *)temp->data)->data);
             }
-            free(temp); // Eliberează memoria alocată pentru nodul curent
+            if (temp->data != NULL) {
+                free(temp->data);
+            }
+            free(temp);
         }
+
         free((*sfl)->lists[i]);
     }
     free((*sfl)->lists);
     free((*sfl));
-
     *sfl = NULL;
 
     if (allocated_list == NULL || *allocated_list == NULL) {
@@ -272,15 +339,19 @@ void destroy_heap(sfl_t **sfl, dllist_t **allocated_list)
     dll_block_t* nod = (*allocated_list)->head;
     dll_block_t* next_nod = NULL;
 
-    for( unsigned int i = 0; i < (*allocated_list)->count; i++) {
+    for (unsigned int i = 0; i < (*allocated_list)->count; i++) {
         next_nod = nod->next;
-        free(nod->info);
+        if (((info_t *)nod->data)->data != NULL) {
+            free(((info_t *)nod->data)->data);
+        }
+        if (nod->data != NULL) {
+            free(nod->data);
+        }
         free(nod);
         nod = next_nod;
     }
+    
     free((*allocated_list));
-    (*allocated_list) = NULL;
-
-    return;
+    *allocated_list = NULL;
 }
 
