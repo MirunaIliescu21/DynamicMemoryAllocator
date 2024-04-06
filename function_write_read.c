@@ -142,10 +142,10 @@ int write_memory(dllist_t *allocated_list,
         printf("Sirul fara ghilimele: %s\n", data);
     }
 
-    for (size_t i = idx_adrr; i < nod->size && index < num_bytes; i++) {
-        // nod->info[i] = data[index];
-        index++;
-    }    
+    // for (size_t i = idx_adrr; i < nod->size && index < num_bytes; i++) {
+    //     // nod->info[i] = data[index];
+    //     index++;
+    // }    
 
     return 0;
 }
@@ -159,4 +159,6 @@ int read_memory(dllist_t *alloc_list, unsigned long addr, size_t num_bytes) {
     if (check_memory(alloc_list, addr, num_bytes) == 1) {
         return 1;
     }
+
+    return 0;
 }
