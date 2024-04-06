@@ -11,13 +11,13 @@ typedef struct block_t {
 
 } dll_block_t;
 
-typedef struct info_t {
-	unsigned long address;
-	size_t size;
-	int reconstitution_type;
-	void *data;
+// typedef struct info_t {
+// 	unsigned long address;
+// 	size_t size;
+// 	int reconstitution_type;
+// 	char *data;
 
-}info_t;
+// }info_t;
 
 // Structura de lista
 typedef struct {

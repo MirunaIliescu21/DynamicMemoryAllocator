@@ -9,7 +9,7 @@
 
 /* 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 */
 /* valgrind -s --leak-check=full --show-leak-kinds=all --tool=memcheck --track-origins=yes ./*/
-#define DEBUG 1 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
+#define DEBUG 0 /* Seteazala 1 pentru a activa afisarea, la 0 pentru a dezactiva */
 
 
 int main() {

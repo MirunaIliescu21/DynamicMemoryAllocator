@@ -148,6 +148,7 @@ void dll_insert_nth_node(dllist_t* list, size_t pos, size_t size, unsigned long 
     dll_block_t *nod;
     nod = malloc(sizeof(*nod));
     nod->info = malloc(size * sizeof(char));
+    DIE(!nod->info, "Eroare la alocarea memoriei pt campul info\n");
     nod->address = address;
     nod->size= size;
 

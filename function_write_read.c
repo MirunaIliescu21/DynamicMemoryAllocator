@@ -1,6 +1,6 @@
 #include "function_write_read.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 /* AM NEVOIE DE O FUNCTIE CARE IMI RETURNEAZA BLOCUL CU CEA MAI MARE ADRESA
  MAI MICA DECAT ADRESA CITITA CA PARAMETRU IN FUNCTIA WRITE */
@@ -133,7 +133,7 @@ int write_memory(dllist_t *allocated_list,
     long diff = num_bytes - size_in_block; /* de cati bytes mai avem nevoie 
     pentru a cuprinde intrega informatie */
 
-    int index = 0;
+    size_t index = 0;
     unsigned long idx_adrr = address - nod->address; 
     /* idx_adrr reprezinta indicele de pe care incep sa scriu in bloc */
 
@@ -142,10 +142,22 @@ int write_memory(dllist_t *allocated_list,
         printf("Sirul fara ghilimele: %s\n", data);
     }
 
-    // for (size_t i = idx_adrr; i < nod->size && index < num_bytes; i++) {
-    //     // nod->info[i] = data[index];
-    //     index++;
-    // }    
+    char *v = nod->info;
+
+    for (size_t i = idx_adrr; i < nod->size && index < num_bytes; i++) {
+        v[i] = data[index];
+        index++;
+    }
+
+    while (diff > 0) {
+        nod = nod->next;
+        v = nod->info; /* scriu la adresa urm nod */
+        for (size_t i = 0; i < nod->size && index < num_bytes; i++) {
+            v[i] = data[index];
+            index++;
+        }
+        diff = diff - nod->size;
+    } 
 
     return 0;
 }
@@ -160,5 +172,38 @@ int read_memory(dllist_t *alloc_list, unsigned long addr, size_t num_bytes) {
         return 1;
     }
 
+    dll_block_t *nod = dll_address(alloc_list, addr);
+    long size_in_block = end_address(nod) - addr; /*cati bytes putem utiliza 
+    din blocul in care se afla adresa*/
+    long diff = num_bytes - size_in_block; /* de cati bytes mai avem nevoie 
+    pentru a cuprinde intrega informatie */
+
+    size_t index = 0;
+    unsigned long idx_adrr = addr - nod->address; 
+    /* idx_adrr reprezinta indicele de pe care incep sa scriu in bloc */
+    
+    char *v = nod->info;
+    char *str = malloc((num_bytes + 1) * sizeof(char)); /* num_bytes + \0*/
+    /*str este sirul pe care il afisez */
+
+    memset(str, 0, (num_bytes + 1) * sizeof(char));
+    for (size_t i = idx_adrr; i < nod->size && index < num_bytes; i++) {
+        str[index] = v[i];
+        index++;
+    }
+    /* trecem la urm nod/noduri pt a citi din ele */
+    while (diff > 0) {
+        nod = nod->next;
+        v = nod->info; /* citesc de la adresa urm nod */
+        for (size_t i = 0; i < nod->size && index < num_bytes; i++) {
+            str[index] = v[i];
+            index++;
+        }
+        diff = diff - nod->size;
+    }
+
+    /*afisez str*/
+    printf("%s\n", str);
+    free(str);
     return 0;
 }

@@ -16,42 +16,6 @@ dllist_t *dll_create(size_t data_size)
     return list;
 }
 
-// void dll_add_nth_node(dllist_t* list, size_t n)
-// {
-//     dll_block_t *prev, *curr;
-//     dll_block_t *new_node;
-
-//     if (!list) {
-//         return;
-//     }
-
-//     /* n >= list->size inseamna adaugarea unui nou nod la finalul listei. */
-//     if (n > list->count) {
-//         n = list->count;
-//     }
-
-//     curr = list->head;
-//     prev = NULL;
-//     while (n > 0) {
-//         prev = curr;
-//         curr = curr->next;
-//         --n;
-//     }
-
-//     new_node = malloc(sizeof(*new_node));
-//     new_node->info = NULL;
-
-//     new_node->next = curr;
-//     if (prev == NULL) {
-//         /* Adica n == 0. */
-//         list->head = new_node;
-//     } else {
-//         prev->next = new_node;
-//     }
-
-//     list->count++;
-// }
-
 void
 dll_add_nth_node(dllist_t* list, size_t n)
 {
