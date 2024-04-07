@@ -3,11 +3,8 @@
 
 // Strctura de nod
 typedef struct block_t {
-	// unsigned long address; /* Adresa de inceput a blocului */
-	// size_t size; /* Dimensiunea unui bloc */
-	
 	struct block_t *next, *prev;
-	void *data; /* Pentru datele de orice tip */
+	void *data; /* pointeaza catre o structura de date */
 
 } dll_block_t;
 
@@ -17,7 +14,7 @@ typedef struct info_t {
 	// int reconstitution_type;
 	char *data;
 
-}info_t;
+} info_t;
 
 // Structura de lista
 typedef struct {
@@ -33,13 +30,13 @@ typedef struct {
 	size_t bytes_per_list;
 	int reconstitution_type;
 	size_t total_memory;
-    size_t total_allocated_memory;
-    size_t total_free_memory;
-    size_t num_free_blocks;
-    size_t num_allocated_blocks;
-    size_t num_malloc_calls;
-    size_t num_fragmentations;
-    size_t num_free_calls;
+	size_t total_allocated_memory;
+	size_t total_free_memory;
+	size_t num_free_blocks;
+	size_t num_allocated_blocks;
+	size_t num_malloc_calls;
+	size_t num_fragmentations;
+	size_t num_free_calls;
 } sfl_t;
 
 #define MAX_INPUT_LENGTH 600

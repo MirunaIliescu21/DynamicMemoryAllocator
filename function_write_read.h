@@ -14,9 +14,8 @@ unsigned long end_address(dll_block_t *nod);
 int check_memory(dllist_t *alloc_list, unsigned long addr, size_t num_bytes);
 void remove_quotes(char *str);
 int write_memory(dllist_t *allocated_list, unsigned long address,
-                 char* data, size_t num_bytes);
+				 char *data, size_t num_bytes);
 
 int read_memory(dllist_t *alloc_list, unsigned long addr, size_t num_bytes);
-
 
 #endif
