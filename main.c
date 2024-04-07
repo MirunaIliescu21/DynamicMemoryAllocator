@@ -17,34 +17,35 @@ int main(void)
 	sfl_t *sfl = NULL;
 	dllist_t *allocated_list = NULL;
 	char input[MAX_INPUT_LENGTH];
+	char *delim = "\n ";
 
 	while (fgets(input, sizeof(input), stdin)) {
-		char *command = strtok(input, " \n");
+		char *command = strtok(input, delim);
 		if (strcmp(command, "INIT_HEAP") == 0) {
-			unsigned long start_address = strtol(strtok(NULL, " \n"), NULL, 16);
+			unsigned long start_address = strtol(strtok(NULL, delim), NULL, 16);
 			 /* Converteste primul token la un numar in baza 16 */
-			size_t num_lists = atoi(strtok(NULL, " \n"));
-			size_t bytes_per_list = atoi(strtok(NULL, " \n"));
-			int reconstitution_type = atoi(strtok(NULL, " \n"));
+			size_t num_lists = atoi(strtok(NULL, delim));
+			size_t bytes_per_list = atoi(strtok(NULL, delim));
+			int reconstitution_type = atoi(strtok(NULL, delim));
 			sfl = init_heap(start_address, num_lists, bytes_per_list,
 							reconstitution_type);
 
 		} else if (strcmp(command, "MALLOC") == 0) {
-			size_t num_bytes = atoi(strtok(NULL, " \n"));
+			size_t num_bytes = atoi(strtok(NULL, delim));
 			if (DEBUG)
 				printf("Parametru MALLOC: num_bytes=%ld\n", num_bytes);
 			malloc_memory(sfl, num_bytes, &allocated_list);
 
 		} else if (strcmp(command, "FREE") == 0) {
-			unsigned long address = strtol(strtok(NULL, " \n"), NULL, 16);
+			unsigned long address = strtol(strtok(NULL, delim), NULL, 16);
 
 			if (DEBUG)
 				printf("Parametru FREE: address=0x%lx\n", address);
 			free_memory(sfl, address, &allocated_list);
 
 		} else if (strcmp(command, "READ") == 0) {
-			unsigned long address = strtol(strtok(NULL, " \n"), NULL, 16);
-			size_t num_bytes = atoi(strtok(NULL, " \n"));
+			unsigned long address = strtol(strtok(NULL, delim), NULL, 16);
+			size_t num_bytes = atoi(strtok(NULL, delim));
 
 			if (read_memory(allocated_list, address, num_bytes) == 1) {
 				printf("Segmentation fault (core dumped)\n");
@@ -54,9 +55,9 @@ int main(void)
 			}
 
 		} else if (strcmp(command, "WRITE") == 0) {
-			unsigned long address = strtol(strtok(NULL, " \n"), NULL, 16);
+			unsigned long address = strtol(strtok(NULL, delim), NULL, 16);
 			char *data = strtok(NULL, "\"");
-			size_t num_bytes = atoi(strtok(NULL, " \n"));
+			size_t num_bytes = atoi(strtok(NULL, delim));
 			if (write_memory(allocated_list, address, data, num_bytes) == 1) {
 				printf("Segmentation fault (core dumped)\n");
 				dump_memory(sfl, allocated_list);
@@ -68,10 +69,11 @@ int main(void)
 			dump_memory(sfl, allocated_list);
 		} else if (strcmp(command, "DESTROY_HEAP") == 0) {
 			destroy_heap(&sfl, &allocated_list);
-			break; /* Se iese din program */
+			goto end_main; /* Se iese din program */
 		} else {
 			printf("Invalid command\n");
 		}
 	}
+end_main:
 	return 0;
 }
