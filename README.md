@@ -1,4 +1,4 @@
-# Assignment Title: Segregated Free Lists
+# Assignment Title: Dynamic Memory Allocator in C
 
 ## Description
 
